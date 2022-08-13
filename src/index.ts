@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv'
 import { Client, GatewayIntentBits } from 'discord.js'
+import commands from './commands'
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
 
@@ -10,14 +11,14 @@ client.once('ready', () => {
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return
 
-  const { commandName } = interaction
+  const command = commands.get(interaction.commandName)
+  if (!command) return
 
-  if (commandName === 'ping') {
-    await interaction.reply('Pong!')
-  } else if (commandName === 'server') {
-    await interaction.reply(`Server name: ${interaction.guild?.name}\nTotal members: ${interaction.guild?.memberCount}`)
-  } else if (commandName === 'user') {
-    await interaction.reply(`Your tag: ${interaction.user.tag}\nYour id: ${interaction.user.id}`)
+  try {
+    await command.execute(interaction)
+  } catch (error) {
+    console.log(error)
+    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true })
   }
 })
 
