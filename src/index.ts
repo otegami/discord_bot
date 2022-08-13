@@ -1,24 +1,17 @@
 import * as dotenv from 'dotenv'
-import { Client, GatewayIntentBits } from 'discord.js'
+import { CacheType, Client, GatewayIntentBits, Interaction } from 'discord.js'
 import commands from './commands'
+import { events } from './events'
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
 
-client.once('ready', () => {
-  console.log('Ready')
-})
-
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isChatInputCommand()) return
-
-  const command = commands.get(interaction.commandName)
-  if (!command) return
-
-  try {
-    await command.execute(interaction)
-  } catch (error) {
-    console.log(error)
-    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true })
+// 良い感じに書けなかったので別途考える
+events.forEach((event) => {
+  if (event.tag === 'ready') {
+    client.once(event.name, (client: Client<boolean>) => event.execute(client))
+  }
+  if (event.tag === 'interactionCreate') {
+    client.on(event.name, (interaction: Interaction<CacheType>) => event.execute(interaction))
   }
 })
 
